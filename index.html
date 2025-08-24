@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Amber ❤️ Reindert — Game Hub</title>
+  <style>
+    :root{
+      --pink:#ff6699;
+      --pink-dark:#ff3366;
+      --card-bg:#ffffff;
+      --text:#333;
+    }
+    /* Base + light theme */
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg,#ffdde1 0%,#ee9ca7 100%);
+      color:var(--text);
+      text-align:center;
+      overflow-x:hidden;
+      transition: background 0.8s ease, color 0.8s ease;
+      min-height:100dvh;
+    }
+    h1{ margin:18px 16px 6px; font-size:2.2rem; animation:glow 2.2s ease-in-out infinite alternate; }
+    @keyframes glow{
+      from{ text-shadow:0 0 8px #ff94b6, 0 0 14px #ff94b6; }
+      to{   text-shadow:0 0 16px #ff5c8e, 0 0 28px #ff5c8e; }
+    }
+
+    /* Cards + layout */
+    .wrap{ width:clamp(280px, 92vw, 980px); margin:0 auto 64px; padding:8px 10px; }
+    .card{
+      background:var(--card-bg);
+      border-radius:22px;
+      padding:22px;
+      margin:16px 0;
+      box-shadow:0 8px 24px rgba(0,0,0,.12);
+      transition: transform .25s ease, box-shadow .25s ease, background .5s ease, color .5s ease;
+    }
+    .card:hover{ transform:translateY(-3px); box-shadow:0 14px 36px rgba(0,0,0,.16); }
+
+    /* Buttons */
+    .btn{
+      background:var(--pink);
+      color:#fff;
+      border:none;
+      border-radius:12px;
+      padding:12px 18px;
+      font-weight:600;
+      margin:8px 6px;
+      cursor:pointer;
+      transition:transform .15s ease, box-shadow .2s ease, background .25s ease;
+    }
+    .btn:hover{ background:var(--pink-dark); box-shadow:0 0 14px var(--pink-dark); transform:translateY(-1px); }
+    .btn.secondary{ background:#ededed; color:#333; }
+    .btn.chip{ padding:8px 14px; border-radius:999px; font-weight:600; }
+
+    /* Top menu buttons line-up */
+    .menu .btn{ min-width:180px; }
+
+    /* Dark mode */
+    body.dark{
+      background: radial-gradient(1200px 600px at 50% -10%, #1a0010 0%, #0d0d0d 55%, #090909 100%);
+      color:#f5f5f5;
+    }
+    body.dark .card{
+      background:#121212;
+      color:#f5f5f5;
+      border:1px solid rgba(255,51,102,.25);
+      box-shadow:0 0 18px rgba(255,51,102,.18);
+    }
+    body.dark h1{ color:#ff5b89; text-shadow:0 0 18px #ff2e62, 0 0 36px #ff2e62; }
+    .toggle{
+      position:fixed; top:14px; right:14px;
+      width:52px; height:52px; border-radius:50%;
+      background:#222; color:#fff; display:flex; align-items:center; justify-content:center;
+      font-size:22px; cursor:pointer; z-index:20;
+      box-shadow:0 0 12px rgba(255,51,102,.55);
+      transition:background .25s ease, transform .1s ease, box-shadow .3s ease;
+    }
+    .toggle:active{ transform:scale(.96); }
+    body.dark .toggle{ background:#ff2e62; box-shadow:0 0 18px #ff2e62; }
+
+    /* Falling hearts */
+    .heart{ position:fixed; top:-12px; color:#ff3366; font-size:18px; pointer-events:none;
+      animation:fall 6s linear forwards; opacity:.95; }
+    @keyframes fall{
+      0%{ transform:translateY(-10px) translateX(0) rotate(0); opacity:.95;}
+      100%{ transform:translateY(110vh) translateX(20px) rotate(360deg); opacity:0; }
+    }
+
+    /* Modal (Secret Choice) */
+    #choiceModal{
+      display:none; /* stay hidden until opened */
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.78);
+      justify-content:center; align-items:center;
+      z-index:40;
+    }
+    .modal-box{
+      background:#fff; color:#222;
+      width:min(92vw, 420px);
+      border-radius:18px; padding:22px;
+      box-shadow:0 14px 42px rgba(0,0,0,.35);
+      animation:pop .18s ease;
+    }
+    @keyframes pop{ from{ transform:scale(.96); opacity:0;} to{ transform:scale(1); opacity:1;} }
+    body.dark .modal-box{ background:#1b1b1b; color:#f5f5f5; border:1px solid rgba(255,51,102,.25); }
+
+    select, .select{
+      width:100%;
+      padding:10px 12px; border-radius:10px;
+      border:1px solid #ddd; font-size:1rem;
+      background:#fff; color:#222;
+    }
+    body.dark select{ background:#111; color:#f5f5f5; border-color:#333; }
+
+    .status{ font-weight:700; }
+    .ok{ color:#18b66a; }
+    .no{ color:#c13; }
+    .divider{ height:1px; background:rgba(0,0,0,.08); margin:14px 0; }
+    body.dark .divider{ background:rgba(255,255,255,.08); }
+    .small{ font-size:.95rem; opacity:.9; }
+
+    /* Two-column choice buttons (WYR) on bigger screens */
+    .grid2{ display:grid; grid-template-columns:1fr; gap:10px; }
+    @media (min-width:540px){ .grid2{ grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <!-- Dark mode toggle -->
+  <button class="toggle" id="themeToggle" aria-label="Theme">🌙</button>
+
+  <h1>Amber ❤️ Reindert’s Game Hub</h1>
+  <p class="small" style="margin-top:0;">Cute games for two — mobile-first & neon dark mode ✨</p>
+
+  <div class="wrap">
+
+    <!-- MENU -->
+    <div class="card menu" id="menu">
+      <h2>Games 🎮</h2>
+      <div>
+        <button class="btn" onclick="window.location.href='https://r3indert.github.io/truthordare'">Truth or Dare (+18)</button>
+        <button class="btn" onclick="scrollToCard('secretChoice')">Secret Choice 💌</button>
+        <button class="btn" onclick="scrollToCard('wyr')">Would You Rather 🤔</button>
+      </div>
+    </div>
+
+    <!-- SECRET CHOICE -->
+    <div class="card" id="secretChoice">
+      <h2>Secret Choice 💌</h2>
+      <p class="small">Amber & Reindert pick privately. When both are locked, reveal together.</p>
+
+      <div>
+        <button class="btn chip" onclick="openChoice('Amber')">Amber’s Choice</button>
+        <span id="amberStatus" class="status no">❌ Not chosen</span>
+      </div>
+
+      <div style="height:6px;"></div>
+
+      <div>
+        <button class="btn chip" onclick="openChoice('Reindert')">Reindert’s Choice</button>
+        <span id="reindertStatus" class="status no">❌ Not chosen</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <button id="revealBtn" class="btn" onclick="revealSecrets()" disabled>Reveal Choices 🎉</button>
+      <div id="secretResult" style="margin-top:10px; font-weight:700;"></div>
+    </div>
+
+    <!-- WOULD YOU RATHER -->
+    <div class="card" id="wyr">
+      <h2>Would You Rather 🤔</h2>
+      <div style="margin-bottom:10px;">
+        <button class="btn chip" onclick="setCategory('romantic')">💖 Romantic</button>
+        <button class="btn chip" onclick="setCategory('funny')">😂 Funny</button>
+        <button class="btn chip" onclick="setCategory('spicy')">🔥 Spicy</button>
+      </div>
+
+      <p id="wyrQuestion" style="font-weight:700; min-height:48px; margin:8px 0 6px;">Tap “New Question” to start!</p>
+
+      <!-- Amber/Reindert answer buttons -->
+      <div class="grid2" style="margin:10px 0;">
+        <button class="btn" id="amberA" onclick="pickWYR('Amber','A')" disabled>Amber: Pick A</button>
+        <button class="btn" id="amberB" onclick="pickWYR('Amber','B')" disabled>Amber: Pick B</button>
+      </div>
+      <div class="grid2">
+        <button class="btn" id="reindertA" onclick="pickWYR('Reindert','A')" disabled>Reindert: Pick A</button>
+        <button class="btn" id="reindertB" onclick="pickWYR('Reindert','B')" disabled>Reindert: Pick B</button>
+      </div>
+
+      <div class="divider"></div>
+      <button class="btn" onclick="newWYR()">New Question 🎲</button>
+      <button id="revealWYR" class="btn" onclick="revealWYR()" disabled>Reveal Result 💫</button>
+
+      <div id="wyrResult" style="margin-top:10px; font-weight:700;"></div>
+    </div>
+
+    <!-- BACK TO TOP -->
+    <div class="card">
+      <button class="btn secondary" onclick="scrollToCard('menu')">⬆️ Back to Menu</button>
+    </div>
+  </div>
+
+  <!-- Secret Choice Modal -->
+  <div id="choiceModal" aria-hidden="true">
+    <div class="modal-box">
+      <h3 id="modalTitle">Choose</h3>
+      <select id="choiceSelect">
+        <option value="" disabled selected>— Choose an action —</option>
+        <option value="Hug 🤗">Hug 🤗</option>
+        <option value="Kiss 💋">Kiss 💋</option>
+        <option value="Massage 💆">Massage 💆</option>
+        <option value="Compliment 🥰">Compliment 🥰</option>
+        <option value="Surprise 🎁">Surprise 🎁</option>
+        <option value="Something spicy 🔥">Something spicy 🔥</option>
+      </select>
+      <div style="height:10px;"></div>
+      <button class="btn" onclick="lockChoice()">Lock In ✅</button>
+      <div style="height:6px;"></div>
+      <button class="btn secondary" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    /* THEME */
+    const themeToggle=document.getElementById('themeToggle');
+    themeToggle.addEventListener('click',()=>{
+      document.body.classList.toggle('dark');
+      themeToggle.textContent=document.body.classList.contains('dark')?'☀️':'🌙';
+    });
+
+    /* Hearts */
+    function dropHeart(){
+      const h=document.createElement('div');
+      h.className='heart';
+      h.textContent='❤️';
+      h.style.left=Math.random()*100+'vw';
+      h.style.fontSize=(16+Math.random()*18)+'px';
+      document.body.appendChild(h);
+      setTimeout(()=>h.remove(),6000);
+    }
+    setInterval(dropHeart,900);
+
+    /* Smooth scroll */
+    function scrollToCard(id){ document.getElementById(id).scrollIntoView({behavior:'smooth', block:'start'}); }
+
+    /* ===== SECRET CHOICE ===== */
+    const modal = document.getElementById('choiceModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const selectEl = document.getElementById('choiceSelect');
+    let scChoices = { Amber:null, Reindert:null };
+    let scCurrent = null;
+
+    function openChoice(player){
+      scCurrent = player;
+      modalTitle.textContent = `${player}, pick your secret 💌`;
+      selectEl.selectedIndex = 0;               // reset each time
+      modal.style.display = 'flex';             // show modal
+      modal.setAttribute('aria-hidden','false');
+    }
+    function closeModal(){
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden','true');
+    }
+    function lockChoice(){
+      const val = selectEl.value;
+      if(!val){ alert('Please choose something!'); return; }
+      scChoices[scCurrent] = val;
+      document.getElementById(scCurrent.toLowerCase()+'Status').textContent = '✅ Locked In';
+      document.getElementById(scCurrent.toLowerCase()+'Status').classList.remove('no');
+      document.getElementById(scCurrent.toLowerCase()+'Status').classList.add('ok');
+      closeModal();
+      // enable reveal if both picked
+      document.getElementById('revealBtn').disabled = !(scChoices.Amber && scChoices.Reindert);
+    }
+    function revealSecrets(){
+      const out = `Amber chose: ${scChoices.Amber}  |  Reindert chose: ${scChoices.Reindert}` +
+                  (scChoices.Amber===scChoices.Reindert ? '  — ✨ Perfect Match! ✨' : '');
+      document.getElementById('secretResult').textContent = out;
+    }
+
+    /* ===== WOULD YOU RATHER ===== */
+    const WYR = {
+      romantic:[
+        {A:"Cuddle all night", B:"Slow-dance to one song"},
+        {A:"Cook dinner together", B:"Order in & movie night"},
+        {A:"Sunset beach walk", B:"Stargazing with blankets"},
+        {A:"Give a massage", B:"Get a massage"},
+        {A:"Write love notes", B:"Record voice notes"}
+      ],
+      funny:[
+        {A:"Wear matching pajamas all day", B:"Speak in movie quotes"},
+        {A:"Do a ridiculous dance", B:"Sing a cringe song"},
+        {A:"Talk only in whispers", B:"Talk only in rhymes"},
+        {A:"Eat dessert first", B:"Breakfast for dinner"},
+        {A:"Tell the worst joke", B:"Make the worst pun"}
+      ],
+      spicy:[
+        {A:"Blindfold surprise", B:"Ice cube challenge"},
+        {A:"30-second kiss", B:"1-minute lap dance"},
+        {A:"Truth with a blush", B:"Dare with a kiss"},
+        {A:"Share a fantasy", B:"Act out a scene"},
+        {A:"Swap an item of clothing", B:"Secret note & meet"}
+      ]
+    };
+    let wyrCategory = 'romantic';
+    let currentQ = null;
+    let wyrPicks = { Amber:null, Reindert:null };
+
+    function setCategory(cat){
+      wyrCategory = cat;
+      newWYR();
+    }
+    function newWYR(){
+      // pick random question in category
+      const arr = WYR[wyrCategory];
+      currentQ = arr[Math.floor(Math.random()*arr.length)];
+      document.getElementById('wyrQuestion').textContent = `Would you rather: A) ${currentQ.A} — OR — B) ${currentQ.B}?`;
+      // reset picks/buttons/result
+      wyrPicks = {Amber:null, Reindert:null};
+      ['amberA','amberB','reindertA','reindertB'].forEach(id=>document.getElementById(id).disabled=false);
+      document.getElementById('revealWYR').disabled = true;
+      document.getElementById('wyrResult').textContent = '';
+    }
+    function pickWYR(player, choice){
+      wyrPicks[player] = choice; // 'A' or 'B'
+      // if both picked, enable reveal
+      document.getElementById('revealWYR').disabled = !(wyrPicks.Amber && wyrPicks.Reindert);
+      // briefly flash feedback
+      const btnId = (player==='Amber' ? 'amber' : 'reindert') + choice;
+      const btn = document.getElementById(btnId);
+      btn.style.transform='scale(1.03)';
+      setTimeout(()=>btn.style.transform='scale(1)',140);
+    }
+    function revealWYR(){
+      const match = (wyrPicks.Amber === wyrPicks.Reindert);
+      const aText = currentQ.A, bText = currentQ.B;
+      const text = `Amber chose ${wyrPicks.Amber} (${wyrPicks.Amber==='A'?aText:bText}) • ` +
+                   `Reindert chose ${wyrPicks.Reindert} (${wyrPicks.Reindert==='A'?aText:bText})` +
+                   (match ? ' — ✨ Perfect Match! ✨' : '');
+      document.getElementById('wyrResult').textContent = text;
+      // lock buttons until next question
+      ['amberA','amberB','reindertA','reindertB'].forEach(id=>document.getElementById(id).disabled=true);
+    }
+
+    // Start with a romantic question ready
+    newWYR();
+  </script>
+</body>
+</html>
